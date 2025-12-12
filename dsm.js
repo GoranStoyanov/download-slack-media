@@ -37,6 +37,19 @@ function extFromMime(mime) {
   return '.' + sub;
 }
 
+function cleanSlackUrl(rawUrl) {
+  // Some exports include an expired ?token=... query param; strip it so we rely on the provided bearer token instead.
+  try {
+    const url = new URL(rawUrl);
+    url.searchParams.delete('token');
+    url.searchParams.delete('t');
+    url.searchParams.delete('pub_secret');
+    return url.toString();
+  } catch {
+    return rawUrl;
+  }
+}
+
 async function walkExportDir(baseDir) {
   const jsonFiles = [];
   const binaryMediaFiles = [];
@@ -93,7 +106,7 @@ async function collectMediaFromJson(jsonPath) {
 
       if (isMediaMimetype(mime) || isMediaFilename(name)) {
         media.push({
-          url,
+          url: cleanSlackUrl(url),
           name,
           mimetype: mime,
           id: f.id
@@ -243,4 +256,3 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-
